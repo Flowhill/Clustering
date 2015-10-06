@@ -57,10 +57,19 @@ public class KMeans extends ClusteringAlgorithm
 	public boolean train()
 	{
 	 	//implement k-means algorithm here:
-		// Step 1: Select an initial random partioning with k clusters
+		// Step 1: Select an initial random partitioning with k clusters
 		// Step 2: Generate a new partition by assigning each datapoint to its closest cluster center
 		// Step 3: recalculate cluster centers
 		// Step 4: repeat until clustermembership stabilizes
+
+		/// Step 1
+		Random rand = new Random();
+		for(int i = 0; i < trainData.size(); i++ ){
+			int randValue = rand.nextInt(4); ///Generates a random value from 0 to 3
+			float[] member = new float[];
+			member = trainData.get(i);
+			clusters[randValue] = member[0];///Want to assign value to cluster, doesn't match up?
+		}
 		return false;
 	}
 
