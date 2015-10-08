@@ -65,11 +65,11 @@ public class KMeans extends ClusteringAlgorithm
 		/// Step 1
 		Random rand = new Random();
 		for(int i = 0; i < trainData.size(); i++ ){
-			int randValue = rand.nextInt(4); ///Generates a random value from 0 to 3
-			float[] member = new float[];
-			member = trainData.get(i);
-			clusters[randValue] = member[0];///Want to assign value to cluster, doesn't match up?
+			int randValue = rand.nextInt(k); ///Generates a random value from 0 to k-1
+			clusters[randValue].currentMembers.add(i); ///Add index to currentMembers
 		}
+
+		/// Creating prototype, prototype is an array with values of the means of all members in one cluster.
 		return false;
 	}
 
