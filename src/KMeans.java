@@ -26,8 +26,8 @@ public class KMeans extends ClusteringAlgorithm
 		  
 		public Cluster()
 		{
-			currentMembers = new HashSet<Integer>();
-			previousMembers = new HashSet<Integer>();
+			currentMembers = new HashSet<>();
+			previousMembers = new HashSet<>();
 		}
 	}
 	// These vectors contains the feature vectors you need; the feature vectors are float arrays.
@@ -45,11 +45,10 @@ public class KMeans extends ClusteringAlgorithm
 		if ( h1.size() != h2.size() ) {
 			return 0;
 		}
-		Set<Integer> clone = new HashSet<Integer>(h2); // just use h2 if you don't need to save the original h2
-		Iterator it = h1.iterator();
-		while (it.hasNext() ){
-			int remover = (int)it.next();
-			if (clone.contains(remover)){ // replace clone with h2 if not concerned with saving data from h2
+		Set<Integer> clone = new HashSet<>(h2); // just use h2 if you don't need to save the original h2
+		for (Object aH1 : h1) {
+			int remover = (int) aH1;
+			if (clone.contains(remover)) { // replace clone with h2 if not concerned with saving data from h2
 				clone.remove(remover);
 			} else {
 				return 0;
@@ -75,7 +74,6 @@ public class KMeans extends ClusteringAlgorithm
 	public float[] computePrototype(int clusterNumber){
 		float[] prototype = new float[200];
 		for(int member : clusters[clusterNumber].currentMembers) {
-
 			for (int h = 0; h < 200; h++) {
 				prototype[h] += trainData.get(member)[h];
 			}
@@ -103,24 +101,24 @@ public class KMeans extends ClusteringAlgorithm
 			clusters[randValue].currentMembers.add(i); ///Add index to currentMembers
 		}
 
-		/// Creating prototype, prototype is an array with values of the means of all members in one cluster.
 		int stabilized = 0; /// Assume the situation is unstable (0)
-		/// Step 2-4
-		while(stabilized == 0) { /// Apply k-means while the situation is unstable
-			/// First prototype assignment AND step 3
-			for (int i = 0; i < k; i++) {
-				clusters[i].prototype = computePrototype(i);
-				clusters[i].previousMembers = clusters[i].currentMembers;
-				clusters[i].currentMembers.clear();
+		while(stabilized == 0) { /// Step 4: Repeat k-means while the situation is unstable
+			/// Step 3
+			for (int j = 0; j < k; j++) {
+				clusters[j].prototype = computePrototype(j);
+				clusters[j].previousMembers = clusters[j].currentMembers;
+				clusters[j].currentMembers.clear();
 			}
 			/// Step 2
-			for (int i = 0; i < trainData.size(); i++) {   // loop over train data arrays
+			for (int i = 0; i < trainData.size(); i++) {   // loop over all clients
 				int best = -1;
 				double minDistance = Double.POSITIVE_INFINITY; //distance = infinity at first
 				for (int j = 0; j < k; j++) {   // loop over clusters to find the closest centroid
 					double distance = 0;
+					float[] x = clusters[j].prototype;
+					float[] y = trainData.get(i);
 					for (int h = 0; h < 200; h++) {
-						distance += Math.pow(clusters[j].prototype[h] - trainData.get(i)[h], 2);
+						distance += Math.pow(x[h] - y[h], 2);
 					}
 					distance = Math.sqrt(distance);
 					if (distance < minDistance) {
@@ -141,14 +139,21 @@ public class KMeans extends ClusteringAlgorithm
 
 	public boolean test()
 	{
-		// iterate along all clients. Assumption: the same clients are in the same order as in the testData
-		// for each client find the cluster of which it is a member
-		// get the actual testData (the vector) of this client
-		// iterate along all dimensions
-		// and count prefetched htmls
-		// count number of hits
-		// count number of requests
-		// set the global variables hitrate and accuracy to their appropriate value
+		for (int i = 0; i < testData.size(); i++) {    // iterate along all clients. Assumption: the same clients are in the same order as in the testData
+			int clusterNumber;
+			for (int j = 0; j < k; j++) {                // for each client find the cluster of which it is a member
+				if (clusters[j].currentMembers.contains(i)) {
+					clusterNumber = j;
+				}
+			}
+			float[] data = testData.get(i); // get the actual testData (the vector) of this client
+			// iterate along all dimensions
+			// and count prefetched htmls
+			// count number of hits
+			// count number of requests
+			// set the global variables hitrate and accuracy to their appropriate value
+
+		}
 		return true;
 	}
 
@@ -177,7 +182,7 @@ public class KMeans extends ClusteringAlgorithm
 				System.out.print(clusters[ic].prototype[ip] + " ");
 			
 			System.out.println();
-		 }
+		}
 	}
 
 	// With this function you can set the prefetch threshold.
