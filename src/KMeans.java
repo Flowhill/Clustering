@@ -38,6 +38,25 @@ public class KMeans extends ClusteringAlgorithm
 	// Results of test()
 	private double hitrate;
 	private double accuracy;
+
+	public int isIdenticalSet(Set<Integer> h1, Set<Integer> h2) {
+		/// Source: http://stackoverflow.com/questions/11888554/way-to-check-if-two-collections-contain-the-same-elements-independent-of-order
+		/// Altered to work for sets and return 1 if the sets are equal, 0 if they are not
+		if ( h1.size() != h2.size() ) {
+			return 0;
+		}
+		Set<Integer> clone = new HashSet<Integer>(h2); // just use h2 if you don't need to save the original h2
+		Iterator it = h1.iterator();
+		while (it.hasNext() ){
+			int remover = (int)it.next();
+			if (clone.contains(remover)){ // replace clone with h2 if not concerned with saving data from h2
+				clone.remove(remover);
+			} else {
+				return 0;
+			}
+		}
+		return 1; // will only return true(1) if sets are equal
+	}
 	
 	public KMeans(int k, Vector<float[]> trainData, Vector<float[]> testData, int dim)
 	{
@@ -51,6 +70,21 @@ public class KMeans extends ClusteringAlgorithm
 		clusters = new Cluster[k];
 		for (int ic = 0; ic < k; ic++)
 			clusters[ic] = new Cluster();
+	}
+
+	public float[] computePrototype(int clusterNumber){
+		float[] prototype = new float[200];
+		for(int member : clusters[clusterNumber].currentMembers) {
+
+			for (int h = 0; h < 200; h++) {
+				prototype[h] += trainData.get(member)[h];
+			}
+		}
+		int size = clusters[clusterNumber].currentMembers.size();
+		for (int h = 0; h < 200; h++) {
+			prototype[h] /= size;
+		}
+		return prototype;
 	}
 
 
@@ -70,6 +104,38 @@ public class KMeans extends ClusteringAlgorithm
 		}
 
 		/// Creating prototype, prototype is an array with values of the means of all members in one cluster.
+		int stabilized = 0; /// Assume the situation is unstable (0)
+		/// Step 2-4
+		while(stabilized == 0) { /// Apply k-means while the situation is unstable
+			/// First prototype assignment AND step 3
+			for (int i = 0; i < k; i++) {
+				clusters[i].prototype = computePrototype(i);
+				clusters[i].previousMembers = clusters[i].currentMembers;
+				clusters[i].currentMembers.clear();
+			}
+			/// Step 2
+			for (int i = 0; i < trainData.size(); i++) {   // loop over train data arrays
+				int best = -1;
+				double minDistance = Double.POSITIVE_INFINITY; //distance = infinity at first
+				for (int j = 0; j < k; j++) {   // loop over clusters to find the closest centroid
+					double distance = 0;
+					for (int h = 0; h < 200; h++) {
+						distance += Math.pow(clusters[j].prototype[h] - trainData.get(i)[h], 2);
+					}
+					distance = Math.sqrt(distance);
+					if (distance < minDistance) {
+						minDistance = distance;
+						best = j;
+					}
+				}
+				clusters[best].currentMembers.add(i);
+
+			}
+			stabilized = 1; /// Assume the situation is stable (1)
+			for (int j = 0; j < k; j++) { /// Check whether the situation is truly stable (will become 0 when unstable, 1 if stable)
+				stabilized *= isIdenticalSet(clusters[j].currentMembers, clusters[j].previousMembers); /// If at any point 0 is returned in the loop -> stabilized = 0
+			}
+		}
 		return false;
 	}
 
