@@ -151,30 +151,40 @@ public class KMeans extends ClusteringAlgorithm
 
 	public boolean test()
 	{
-		int  prefetches,hits,requests;
-		prefetches =hits =requests =0;
-		for (int i = 0; i < testData.size(); i++) {    // iterate along all clients. Assumption: the same clients are in the same order as in the testData
-			int  clusterNumber = - 1 ;
-			for (int j = 0; j < k; j++) {                // for each client find the cluster of which it is a member
-				if (clusters[j].currentMembers.contains(i)) {
-					clusterNumber = j;
+
+		for( int t = 0; t <= 9; t++) { ///iterate over prefetch thresholds
+			prefetchThreshold = t / 10.0;
+			int prefetches, hits, requests;
+			prefetches = hits = requests = 0;
+			for (int i = 0; i < testData.size(); i++) {    // iterate along all clients. Assumption: the same clients are in the same order as in the testData
+				int clusterNumber = -1;
+				for (int j = 0; j < k; j++) {                // for each client find the cluster of which it is a member
+					if (clusters[j].currentMembers.contains(i)) {
+						clusterNumber = j;
+					}
+				}
+				float[] prototype = clusters[clusterNumber].prototype;
+				float[] datapoint = testData.get(i);    // get the actual testData (the vector) of this client
+				boolean a, b;
+				for (int h = 0; h < 200; h++) {        // iterate along all dimensions
+					a = datapoint[h] == 1;
+					b = prototype[h] >= prefetchThreshold;
+					if (b) prefetches++; // and count prefetched htmls
+					if (a & b) hits++; // count number of hits
+					if (a) requests++; // count number of requests
 				}
 			}
-			float[] prototype = clusters[clusterNumber].prototype;
-			float[] datapoint = testData.get(i); 	// get the actual testData (the vector) of this client
-			boolean a, b;
-			for (int h = 0; h < 200; h++) { 		// iterate along all dimensions
-				a = datapoint[h] == 1;
-				b = prototype[h] > prefetchThreshold;
-				if (b)	 prefetches++; // and count prefetched htmls
-				if (a & b)     hits++; // count number of hits
-				if (a)	   requests++; // count number of requests
-			}
-		}
-		// set the global variables hitrate and accuracy to their appropriate value:
-		this.hitrate= (double)hits / (double)requests;
-		this.accuracy=(double)hits/ (double)prefetches;
+			// set the global variables hitrate and accuracy to their appropriate value:
+			this.hitrate = (double) (hits) / (double) (requests);
+			this.accuracy = (double) (hits) / (double) (prefetches);
 
+			System.out.println("");
+			System.out.println("Prefetch threshold = " + this.prefetchThreshold);
+			System.out.println("Hitrate: " + this.hitrate);
+			System.out.println("Accuracy: " + this.accuracy);
+			System.out.println("Hitrate + Accuracy = " + (this.hitrate + this.accuracy));
+			System.out.println("");
+		}
 		return true;
 	}
 
@@ -182,10 +192,6 @@ public class KMeans extends ClusteringAlgorithm
 	// The following members are called by RunClustering, in order to present information to the user
 	public void showTest()
 	{
-		System.out.println("Prefetch threshold=" + this.prefetchThreshold);
-		System.out.println("Hitrate: " + this.hitrate);
-		System.out.println("Accuracy: " + this.accuracy);
-		System.out.println("Hitrate+Accuracy=" + (this.hitrate + this.accuracy));
 	}
 	
 	public void showMembers()
