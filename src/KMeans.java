@@ -71,16 +71,17 @@ public class KMeans extends ClusteringAlgorithm
 			clusters[ic] = new Cluster();
 	}
 
-	public float[] computePrototype(int clusterNumber){
+	public float[] computePrototype(int clusterNumber, float[] prior){
 		float[] prototype = new float[200];
-		for(int member : clusters[clusterNumber].currentMembers) {
+		for(int i : clusters[clusterNumber].currentMembers) {
 			for (int h = 0; h < 200; h++) {
-				prototype[h] += trainData.get(member)[h];
+				prototype[h] += trainData.get(i)[h];
 			}
 		}
 		int size = clusters[clusterNumber].currentMembers.size();
 		for (int h = 0; h < 200; h++) {
-			prototype[h] /= size;
+			prototype[h] += 2*prior[h];
+			prototype[h] /= size + 2;
 		}
 		return prototype;
 	}
@@ -101,11 +102,22 @@ public class KMeans extends ClusteringAlgorithm
 			clusters[randValue].currentMembers.add(i); ///Add index to currentMembers
 		}
 
+		/// Compute Priors:
+		float[] prior = new float[200];
+		for (int h = 0; h < 200; h++) {
+			prior[h] = 1;
+			int size = trainData.size();
+			for (float[] aTrainData : trainData) {
+				prior[h] += aTrainData[h];
+			}
+			prior[h] /= size + 2;
+		}
+
 		int stabilized = 0; /// Assume the situation is unstable (0)
 		while(stabilized == 0) { /// Step 4: Repeat k-means while the situation is unstable
 			/// Step 3
 			for (int j = 0; j < k; j++) {
-				clusters[j].prototype = computePrototype(j);
+				clusters[j].prototype = computePrototype( j, prior);
 				clusters[j].previousMembers = clusters[j].currentMembers;
 				clusters[j].currentMembers.clear();
 			}
@@ -153,7 +165,7 @@ public class KMeans extends ClusteringAlgorithm
 			boolean a, b;
 			for (int h = 0; h < 200; h++) { 		// iterate along all dimensions
 				a = datapoint[h] == 1;
-				b = prototype[h] == 1;
+				b = prototype[h] > prefetchThreshold;
 				if (b)	 prefetches++; // and count prefetched htmls
 				if (a & b)     hits++; // count number of hits
 				if (a)	   requests++; // count number of requests
