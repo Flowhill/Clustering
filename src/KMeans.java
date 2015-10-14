@@ -139,21 +139,30 @@ public class KMeans extends ClusteringAlgorithm
 
 	public boolean test()
 	{
+		int  prefetches,hits,requests;
+		prefetches =hits =requests =0;
 		for (int i = 0; i < testData.size(); i++) {    // iterate along all clients. Assumption: the same clients are in the same order as in the testData
-			int clusterNumber;
+			int  clusterNumber = - 1 ;
 			for (int j = 0; j < k; j++) {                // for each client find the cluster of which it is a member
 				if (clusters[j].currentMembers.contains(i)) {
 					clusterNumber = j;
 				}
 			}
-			float[] data = testData.get(i); // get the actual testData (the vector) of this client
-			// iterate along all dimensions
-			// and count prefetched htmls
-			// count number of hits
-			// count number of requests
-			// set the global variables hitrate and accuracy to their appropriate value
-
+			float[] prototype = clusters[clusterNumber].prototype;
+			float[] datapoint = testData.get(i); 	// get the actual testData (the vector) of this client
+			boolean a, b;
+			for (int h = 0; h < 200; h++) { 		// iterate along all dimensions
+				a = datapoint[h] == 1;
+				b = prototype[h] == 1;
+				if (b)	 prefetches++; // and count prefetched htmls
+				if (a & b)     hits++; // count number of hits
+				if (a)	   requests++; // count number of requests
+			}
 		}
+		// set the global variables hitrate and accuracy to their appropriate value:
+		this.hitrate= hits / requests;
+		this.accuracy=hits/prefetches;
+
 		return true;
 	}
 
